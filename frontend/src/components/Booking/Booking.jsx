@@ -2,8 +2,9 @@ import React, { useState, useContext, useEffect } from "react";
 import { FaStar } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { AuthContext } from "../../context/AuthContext";
-import { v4 as uuidv4 } from 'uuid';
-const Booking = ({ price, title, reviewsArray, avgRating,id }) => {
+import { v4 as uuidv4 } from "uuid";
+
+const Booking = ({ price, title, reviewsArray, avgRating, id }) => {
   const currentDate = new Date().toISOString().split("T")[0];
   const { user } = useContext(AuthContext);
 
@@ -29,7 +30,8 @@ const Booking = ({ price, title, reviewsArray, avgRating,id }) => {
   }, [title, calculatedPrice]);
 
   const handleChange = (e) => {
-    setData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
+    const { id, value } = e.target;
+    setData((prev) => ({ ...prev, [id]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -37,6 +39,29 @@ const Booking = ({ price, title, reviewsArray, avgRating,id }) => {
 
     if (!user) {
       toast.error("Please Sign In first");
+      return;
+    }
+
+    // Validation checks before proceeding
+    if (!data.fullName || !/^[a-zA-Z\s]+$/.test(data.fullName)) {
+      toast.error("Please enter a valid full name (only alphabets and spaces)");
+      return;
+    }
+
+    if (!data.phone || !/^[0-9]{10}$/.test(data.phone)) {
+      toast.error("Please enter a valid 10-digit contact number");
+      return;
+    }
+
+    if (!data.maxGroupSize || Number(data.maxGroupSize) <= 0) {
+      toast.error("Number of persons must be greater than 0");
+      return;
+    }
+
+    const selectedDate = new Date(data.date);
+    const todayDate = new Date(currentDate);
+    if (!data.date || selectedDate < todayDate) {
+      toast.error("Booking date cannot be in the past");
       return;
     }
 
@@ -57,26 +82,27 @@ const Booking = ({ price, title, reviewsArray, avgRating,id }) => {
       const result = await response.json();
 
       if (response.ok && result.url) {
-        // Redirect to Stripe's Checkout page
+        // Log booking in the backend
         await fetch(`http://localhost:3050/api/booking`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            paymentIntentId:uuidv4(),
-            userId:user._id,
-            tourId:id,
-            bookingDate:data.date,
-            totalPrice:calculatedPrice,
-            username:data.fullName,
-            tourname:title,
-            members:data.maxGroupSize,
-            phone:data.phone
+            paymentIntentId: uuidv4(),
+            userId: user._id,
+            tourId: id,
+            bookingDate: data.date,
+            totalPrice: calculatedPrice,
+            username: data.fullName,
+            tourname: title,
+            members: data.maxGroupSize,
+            phone: data.phone,
           }),
         });
-        window.location.href = result.url;
 
+        // Redirect to Stripe's Checkout page
+        window.location.href = result.url;
       } else {
         toast.error(result.message || "Failed to create payment session");
       }
@@ -148,7 +174,7 @@ const Booking = ({ price, title, reviewsArray, avgRating,id }) => {
           <div className="mt-12">
             <div className="flex my-4 justify-between">
               <span>Gross Price: </span>
-              <p className="font-semibold">Rs. {price}</p>
+              <p className="font-semibold">$ {price}</p>
             </div>
             <div className="flex my-4 border-b-[1px] pb-2 border-black justify-between">
               <span>GST: </span>
@@ -156,7 +182,7 @@ const Booking = ({ price, title, reviewsArray, avgRating,id }) => {
             </div>
             <div className="flex my-6 justify-between font-bold text-lg">
               <span>Net Price: </span>
-              <p>Rs. {calculatedPrice}</p>
+              <p>$ {calculatedPrice}</p>
             </div>
           </div>
           <button type="submit" className="btn w-full">
