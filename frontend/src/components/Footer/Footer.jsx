@@ -26,7 +26,7 @@ const Footer = () => {
               />
               <div className="flex flex-col mt-8 text-center md:text-left">
                 <p className="mb-2">Address: Chitkara University, Chandigarh,INDIA</p>
-                <p className="mb-2">Phone: 6284376084</p>
+                <p className="mb-2">Phone: 8798174951</p>
                 <p className="mb-2">Email: adtravelzzz@gmail.com</p>
                 <p>&copy; 2024 AdTravelz. All rights reserved.</p>
               </div>
